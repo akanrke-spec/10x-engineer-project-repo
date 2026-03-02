@@ -2,7 +2,9 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Optional
+from typing import List, Optional
+from app.models import PromptWithTags, Tag, generate_id, TagsInput# Import Tag model
+from app.storage import storage  # Use the existing storage instance
 
 from app.models import (
     Prompt, PromptCreate, PromptUpdate,
@@ -326,3 +328,94 @@ def delete_collection(collection_id: str):
     storage.delete_collection(collection_id)
     
     return None
+
+# Endpoint to add tags to a prompt
+@app.post("/prompts/{prompt_id}/tags", response_model=PromptWithTags)
+def add_tags_to_prompt(prompt_id: str, tags_input: TagsInput):
+    """
+    Add tags to a specific prompt by prompt_id.
+    """
+    tags = tags_input.tags  # Extract tags from the model
+    
+    # Check if tags are empty
+    if not tags:
+        raise HTTPException(status_code=400, detail="Tags input cannot be empty")
+
+    # Check for any invalid tags (e.g., empty strings)
+    if any(not tag or tag.isspace() for tag in tags):
+        raise HTTPException(status_code=400, detail="Tags cannot contain empty or whitespace-only strings")
+
+    prompt = storage.get_prompt(prompt_id)
+    if prompt is None:
+        raise HTTPException(status_code=404, detail="Prompt not found")
+    
+    tag_objects = [Tag(id=generate_id(), name=tag) for tag in tags]
+    updated_prompt = storage.add_tags_to_prompt(prompt_id, tag_objects)
+    return updated_prompt
+
+# Endpoint to get all tags of a prompt
+@app.get("/prompts/{prompt_id}/tags", response_model=List[Tag])
+def get_tags_for_prompt(prompt_id: str):
+    """
+    Retrieve all tags associated with a specific prompt.
+
+    Args:
+        prompt_id (str): The unique identifier of the prompt.
+
+    Returns:
+        List[Tag]: A list of tags for the specified prompt.
+
+    Raises:
+        HTTPException: If the prompt is not found.
+
+    Example usage:
+        `/prompts/456/tags`
+    """
+    tags = storage.get_tags_by_prompt(prompt_id)
+    if tags is None:
+        raise HTTPException(status_code=404, detail="Prompt not found or has no tags")
+    return tags
+
+
+# Endpoint to search prompts by a tag
+@app.get("/tags/{tag_name}/prompts", response_model=List[PromptWithTags])
+def search_prompts_by_tag(tag_name: str):
+    """
+    Search for prompts associated with a specific tag.
+
+    Args:
+        tag_name (str): The name of the tag to search for.
+
+    Returns:
+        List[PromptWithTags]: A list of prompts that contain the specified tag.
+
+    Example usage:
+        `/tags/AI/prompts`
+    """
+    prompts = storage.search_prompts_by_tag(tag_name)
+    return prompts
+
+
+# Endpoint to remove a tag from a prompt
+@app.delete("/prompts/{prompt_id}/tags/{tag_name}", response_model=PromptWithTags)
+def remove_tag_from_prompt(prompt_id: str, tag_name: str):
+    """
+    Remove a tag from a specific prompt by tag name.
+
+    Args:
+        prompt_id (str): The unique ID of the prompt.
+        tag_name (str): The name of the tag to remove.
+
+    Returns:
+        PromptWithTags: The updated prompt after removing the tag.
+
+    Raises:
+        HTTPException: If the prompt is not found or tag is not associated.
+
+    Example usage:
+        `/prompts/456/tags/AI`
+    """
+    updated_prompt = storage.remove_tag_from_prompt(prompt_id, tag_name)
+    if updated_prompt is None:
+        raise HTTPException(status_code=404, detail="Prompt or tag not found")
+    return updated_prompt

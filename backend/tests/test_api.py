@@ -388,3 +388,127 @@ class TestCollectionEndpoints:
         response = client.delete("/collections/nonexistent-id")
         assert response.status_code == 404
         assert response.json()["detail"] == "Collection not found"
+
+class TestTagsAPI:
+    """Tests for the tags endpoints related to prompts."""
+    
+    def test_add_tags_success(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Add tags to the prompt
+        tags_input = {"tags": ["AI", "Machine Learning"]}
+        response = client.post(f"/prompts/{prompt_id}/tags", json=tags_input)
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["tags"]) == 2
+
+    def test_add_tags_partial_failure(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Add tags with one invalid tag
+        tags_input = {"tags": ["AI", "", "Deep Learning"]}
+        response = client.post(f"/prompts/{prompt_id}/tags", json=tags_input)
+        assert response.status_code == 400  # Assuming API returns 400 for any invalid input
+
+    def test_add_tags_empty_input(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Add empty tags
+        tags_input = {"tags": []}
+        response = client.post(f"/prompts/{prompt_id}/tags", json=tags_input)
+        assert response.status_code == 400  # Assuming API returns 400 for empty input
+
+    def test_get_tags_success(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Add tags
+        tags_input = {"tags": ["AI", "Machine Learning"]}
+        client.post(f"/prompts/{prompt_id}/tags", json=tags_input)
+
+        # Retrieve tags
+        response = client.get(f"/prompts/{prompt_id}/tags")
+        assert response.status_code == 200
+        tags = response.json()
+        assert len(tags) == 2
+
+    def test_get_tags_not_found(self, client: TestClient):
+        # Attempt to retrieve tags for a non-existent prompt
+        response = client.get("/prompts/nonexistent-id/tags")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Prompt not found or has no tags"
+
+    def test_get_tags_no_tags(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Retrieve tags when there are none
+        response = client.get(f"/prompts/{prompt_id}/tags")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Prompt not found or has no tags"
+    
+    def test_remove_tag_success(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Add tags to prompt
+        tags_input = {"tags": ["AI", "Machine Learning"]}
+        client.post(f"/prompts/{prompt_id}/tags", json=tags_input)
+
+        # Remove a tag
+        response = client.delete(f"/prompts/{prompt_id}/tags/AI")
+        assert response.status_code == 200
+    
+        updated_prompt = response.json()
+        tag_names = [tag['name'] for tag in updated_prompt["tags"]]
+    
+        assert "AI" not in tag_names
+        assert "Machine Learning" in tag_names
+
+    def test_remove_tag_not_associated(self, client: TestClient, sample_prompt_data):
+        # Create a prompt
+        create_response = client.post("/prompts", json=sample_prompt_data)
+        prompt_id = create_response.json()["id"]
+
+        # Attempt to remove a tag that wasn't added
+        response = client.delete(f"/prompts/{prompt_id}/tags/Nonexistent")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Prompt or tag not found"
+
+    def test_remove_tag_not_found(self, client: TestClient):
+        # Attempt to remove a tag from a non-existent prompt
+        response = client.delete("/prompts/nonexistent-id/tags/AI")
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Prompt or tag not found"
+
+class TestTagsSearchAPI:
+    """Tests for the tags endpoint that searches prompts by tag."""
+
+    def test_search_prompts_by_tag_no_prompts(self, client: TestClient):
+        # Search for a non-existent tag or a tag with no prompts
+        response = client.get("/tags/nonexistent/prompts")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 0  # No prompts should be associated
+    
+    def test_search_prompts_by_tag_partial_failure(self, client: TestClient, sample_prompt_data):
+        # Create a prompt with a valid tag
+        prompt1 = sample_prompt_data.copy()
+        prompt1["tags"] = ["AI"]
+        client.post("/prompts", json=prompt1)
+
+        # Attempt to search for a tag with a typo or non-existent
+        response = client.get("/tags/A-I/prompts")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 0  # Should find no prompts
+
