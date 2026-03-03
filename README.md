@@ -217,6 +217,46 @@ curl -X POST "http://localhost:8000/prompts" \
    - Install backend requirements and start the development server using the setup instructions provided earlier.
 
 ---
+## Docker Setup
+
+You can run the PromptLab application using Docker for a consistent and isolated environment.
+
+### Prerequisites
+
+- **Docker**: Ensure Docker is installed on your machine.
+- **Docker Compose**: Ensure Docker Compose is installed.
+
+### Build and Run with Docker
+
+1. **Build and Run the Container**:
+
+   From the project root, you can build the Docker image and start the container with Docker Compose:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   This command will build the Docker image and start the application, making it accessible at [http://localhost:8000](http://localhost:8000).
+
+2. **Stop the Container**:
+
+   To stop the running container, run:
+
+   ```bash
+   docker-compose down
+   ```
+
+3. **Rebuild the Container**:
+
+   If you make changes to dependencies or the Docker configuration, rebuild the container with:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+Using Docker ensures that you are working within a contained environment that mimics production, improving reliability and ease of deployment.
+
+---
 ## Contributions
 
 For contributions, enhancements, or bug reports, please open an issue or pull request on GitHub. We appreciate community input to drive the project forward.

@@ -5,7 +5,7 @@ In a production environment, this would be replaced with a database.
 """
 
 from typing import Dict, List, Optional
-from app.models import Prompt, Collection
+from app.models import Prompt, Collection, Tag, PromptWithTags
 
 
 class Storage:
@@ -135,6 +135,50 @@ class Storage:
             List[Prompt]: A list of prompts associated with the specified collection.
         """
         return [p for p in self._prompts.values() if p.collection_id == collection_id]
+    
+    def _convert_to_prompt_with_tags(self, prompt: Prompt) -> PromptWithTags:
+        """Convert a Prompt to PromptWithTags format."""
+        if isinstance(prompt, PromptWithTags):
+            return prompt
+        return PromptWithTags(**prompt.dict(), tags=[])
+
+    def _add_tags(self, prompt: PromptWithTags, tags: List[Tag]) -> PromptWithTags:
+        """Helper function to add tags to a PromptWithTags."""
+        existing_tag_names = {tag.name for tag in prompt.tags}
+        new_tags = [tag for tag in tags if tag.name not in existing_tag_names]
+        prompt.tags.extend(new_tags)
+        return prompt
+    
+    def add_tags_to_prompt(self, prompt_id: str, tags: List[Tag]) -> Optional[PromptWithTags]:
+        prompt = self._prompts.get(prompt_id)
+        if not prompt:
+            return None
+
+        prompt_with_tags = self._convert_to_prompt_with_tags(prompt)
+        self._prompts[prompt_id] = prompt_with_tags
+
+        return self._add_tags(prompt_with_tags, tags)
+
+    def get_tags_by_prompt(self, prompt_id: str) -> Optional[List[Tag]]:
+        prompt = self._prompts.get(prompt_id)
+        if not prompt:
+            return None
+        prompt_with_tags = self._convert_to_prompt_with_tags(prompt)
+        return prompt_with_tags.tags
+
+    def remove_tag_from_prompt(self, prompt_id: str, tag_name: str) -> Optional[PromptWithTags]:
+        prompt = self._prompts.get(prompt_id)
+        if not prompt or not isinstance(prompt, PromptWithTags):
+            return None
+        
+        prompt.tags = [tag for tag in prompt.tags if tag.name != tag_name]
+        return prompt
+
+    def search_prompts_by_tag(self, tag_name: str) -> List[PromptWithTags]:
+        return [
+            prompt for prompt in self._prompts.values()
+            if isinstance(prompt, PromptWithTags) and tag_name in {tag.name for tag in prompt.tags}
+        ]
     
     def clear(self):
         """Clears all stored prompts and collections.

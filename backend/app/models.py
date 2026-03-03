@@ -34,7 +34,11 @@ def get_current_time() -> datetime:
 
 
 # ============== Prompt Models ==============
+# New model for Tag
 
+class TagsInput(BaseModel):
+    tags: List[str]
+    
 class PromptBase(BaseModel):
     """Base class for prompt models.
 
@@ -54,6 +58,18 @@ class PromptBase(BaseModel):
     description: Optional[str] = Field(None, max_length=500)
     collection_id: Optional[str] = None
 
+class Tag(BaseModel):
+    """Represents a tag with a unique identifier and name."""
+    id: str
+    name: str
+
+# New model extending Prompt to include tags
+class PromptWithTags(PromptBase):
+    """Extends the Prompt model to include associated tags."""
+    tags: List[Tag] = []
+
+    class Config:
+        from_attributes = True
 
 class PromptCreate(PromptBase):
     """Model for creating a new prompt.
