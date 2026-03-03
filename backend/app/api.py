@@ -3,10 +3,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
-from app.models import PromptWithTags, Tag, generate_id, TagsInput# Import Tag model
-from app.storage import storage  # Use the existing storage instance
 
+from app import __version__
 from app.models import (
+    PromptWithTags, Tag, generate_id, TagsInput,
     Prompt, PromptCreate, PromptUpdate,
     Collection, CollectionCreate,
     PromptList, CollectionList, HealthResponse,
@@ -14,7 +14,6 @@ from app.models import (
 )
 from app.storage import storage
 from app.utils import sort_prompts_by_date, filter_prompts_by_collection, search_prompts
-from app import __version__
 
 
 app = FastAPI(

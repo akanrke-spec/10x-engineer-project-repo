@@ -452,9 +452,10 @@ class TestTagsAPI:
 
         # Retrieve tags when there are none
         response = client.get(f"/prompts/{prompt_id}/tags")
-        assert response.status_code == 404
-        assert response.json()["detail"] == "Prompt not found or has no tags"
-    
+        assert response.status_code == 200  # Expect 200 OK instead
+        tags = response.json()
+        assert tags == []  # Ensure it's an empty list
+        
     def test_remove_tag_success(self, client: TestClient, sample_prompt_data):
         # Create a prompt
         create_response = client.post("/prompts", json=sample_prompt_data)

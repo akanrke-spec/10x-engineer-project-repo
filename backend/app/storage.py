@@ -136,26 +136,35 @@ class Storage:
         """
         return [p for p in self._prompts.values() if p.collection_id == collection_id]
     
-    def add_tags_to_prompt(self, prompt_id: str, tags: List[Tag]) -> Optional[PromptWithTags]:
-        prompt = self._prompts.get(prompt_id)
-        if not prompt:
-            return None
-        
-        # Convert prompt to PromptWithTags if it isn't already
-        if not isinstance(prompt, PromptWithTags):
-            prompt = PromptWithTags(**prompt.dict(), tags=[])
-            self._prompts[prompt_id] = prompt
-        
+    def _convert_to_prompt_with_tags(self, prompt: Prompt) -> PromptWithTags:
+        """Convert a Prompt to PromptWithTags format."""
+        if isinstance(prompt, PromptWithTags):
+            return prompt
+        return PromptWithTags(**prompt.dict(), tags=[])
+
+    def _add_tags(self, prompt: PromptWithTags, tags: List[Tag]) -> PromptWithTags:
+        """Helper function to add tags to a PromptWithTags."""
         existing_tag_names = {tag.name for tag in prompt.tags}
         new_tags = [tag for tag in tags if tag.name not in existing_tag_names]
         prompt.tags.extend(new_tags)
         return prompt
+    
+    def add_tags_to_prompt(self, prompt_id: str, tags: List[Tag]) -> Optional[PromptWithTags]:
+        prompt = self._prompts.get(prompt_id)
+        if not prompt:
+            return None
+
+        prompt_with_tags = self._convert_to_prompt_with_tags(prompt)
+        self._prompts[prompt_id] = prompt_with_tags
+
+        return self._add_tags(prompt_with_tags, tags)
 
     def get_tags_by_prompt(self, prompt_id: str) -> Optional[List[Tag]]:
         prompt = self._prompts.get(prompt_id)
-        if not prompt or not isinstance(prompt, PromptWithTags):
+        if not prompt:
             return None
-        return prompt.tags
+        prompt_with_tags = self._convert_to_prompt_with_tags(prompt)
+        return prompt_with_tags.tags
 
     def remove_tag_from_prompt(self, prompt_id: str, tag_name: str) -> Optional[PromptWithTags]:
         prompt = self._prompts.get(prompt_id)
