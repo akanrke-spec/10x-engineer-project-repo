@@ -126,11 +126,11 @@ Global styles and CSS files.
 
 ## API Integration
 
-The frontend is configured to proxy API requests to the backend at `http://localhost:5000`.
+The frontend is configured to proxy API requests to the backend at `http://localhost:8000`.
 
 Example API call:
 ```javascript
-// requests to /api/* will be proxied to http://localhost:5000/*
+// requests to /api/* will be proxied to http://localhost:8000/*
 fetch('/api/prompts')
 ```
 
@@ -139,7 +139,7 @@ fetch('/api/prompts')
 Create a `.env.local` file in the frontend directory for environment-specific settings:
 
 ```
-VITE_API_BASE_URL=http://localhost:5000/api
+VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
 Access in code:
