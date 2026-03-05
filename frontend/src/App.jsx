@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { PromptsPage } from './pages/PromptsPage'
-import { CollectionsPage } from './pages/CollectionsPage'
-import './styles/App.css'
+import { useState } from 'react';
+import { PromptsPage } from './pages/PromptsPage';
+import { CollectionsPage } from './pages/CollectionsPage';
+import './styles/App.css';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('prompts')
+  const [currentPage, setCurrentPage] = useState('prompts');
 
   return (
     <div className="app">
@@ -39,7 +39,7 @@ function App() {
         {currentPage === 'collections' && <CollectionsPage />}
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

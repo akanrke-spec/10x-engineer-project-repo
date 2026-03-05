@@ -1,28 +1,23 @@
 import apiClient from './api'
 
 export const tagService = {
-  async getAllTags() {
-    const response = await apiClient.get('/tags')
+  async getTagsByPrompt(promptId) {
+    const response = await apiClient.get(`/prompts/${promptId}/tags`)
     return response.data
   },
 
-  async getTagById(id) {
-    const response = await apiClient.get(`/tags/${id}`)
+  async addTagsToPrompt(promptId, tags) {
+    const response = await apiClient.post(`/prompts/${promptId}/tags`, { tags })
     return response.data
   },
 
-  async createTag(tagData) {
-    const response = await apiClient.post('/tags', tagData)
+  async removeTagFromPrompt(promptId, tagName) {
+    const response = await apiClient.delete(`/prompts/${promptId}/tags/${tagName}`)
     return response.data
   },
 
-  async updateTag(id, tagData) {
-    const response = await apiClient.put(`/tags/${id}`, tagData)
-    return response.data
-  },
-
-  async deleteTag(id) {
-    const response = await apiClient.delete(`/tags/${id}`)
+  async searchPromptsByTag(tagName) {
+    const response = await apiClient.get(`/tags/${tagName}/prompts`)
     return response.data
   }
 }

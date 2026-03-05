@@ -24,10 +24,5 @@ export const collectionService = {
   async deleteCollection(id) {
     const response = await apiClient.delete(`/collections/${id}`)
     return response.data
-  },
-
-  async getCollectionWithPrompts(id) {
-    const response = await apiClient.get(`/collections/${id}/prompts`)
-    return response.data
   }
 }

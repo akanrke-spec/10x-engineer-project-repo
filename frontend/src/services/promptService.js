@@ -1,8 +1,8 @@
 import apiClient from './api'
 
 export const promptService = {
-  async getAllPrompts() {
-    const response = await apiClient.get('/prompts')
+  async getAllPrompts(params = {}) {
+    const response = await apiClient.get('/prompts', { params })
     return response.data
   },
 
@@ -27,16 +27,12 @@ export const promptService = {
   },
 
   async searchPrompts(query) {
-    const response = await apiClient.get('/prompts/search', {
-      params: { query }
-    })
+    const response = await apiClient.get('/prompts', { params: { search: query } })
     return response.data
   },
 
-  async filterPrompts(filters) {
-    const response = await apiClient.get('/prompts/filter', {
-      params: filters
-    })
+  async filterPrompts(collectionId) {
+    const response = await apiClient.get('/prompts', { params: { collection_id: collectionId } })
     return response.data
   }
 }

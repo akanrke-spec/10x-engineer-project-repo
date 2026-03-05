@@ -1,27 +1,32 @@
 import { useState, useEffect } from 'react'
 
 export const useFetch = (fetchFunction) => {
-  const [data, setData] = useState(null)
+  const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    let isMounted = true
     const fetchData = async () => {
+      setLoading(true)
       try {
-        setLoading(true)
         const result = await fetchFunction()
-        setData(result)
-        setError(null)
+        if (isMounted) {
+          setData(result || [])
+          setError(null)
+        }
       } catch (err) {
-        setError(err.message)
-        setData(null)
+        if (isMounted) {
+          setError(err.message || 'Error fetching data')
+          setData([])
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
-
     fetchData()
-  }, [])
+    return () => { isMounted = false }
+  }, [fetchFunction])
 
   return { data, loading, error }
 }
